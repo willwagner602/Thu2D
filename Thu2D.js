@@ -3,10 +3,10 @@
  */
 
 var elem = document.getElementById('main');
-var board = [];
+var squares = [];
 var SIDE_LENGTH = 50;
 
-var params = { width: 750, height: 750 };
+var params = { width: 800, height: 800 };
 var two = new Two(params);
 two.appendTo(elem);
 
@@ -27,7 +27,7 @@ function create_square(x, y, color){
     rect.opacity = 1.0;
     rect.noStroke();
     two.update();
-    board.push(rect);
+    squares.push(rect);
 }
 
 function add_to_board(x ,y){
@@ -68,7 +68,13 @@ function create_board(){
         }
     }
 
-    var group = two.makeGroup(board);
+    return two.makeGroup(squares);
+
+
 }
 
-create_board();
+board = create_board();
+board.translation.x = 50;
+board.translation.y = 50;
+
+two.update();

@@ -2,6 +2,8 @@
  * Created by wwagner on 9/14/2015.
  */
 
+"use strict"
+
 var elem = document.getElementById('main');
 var squares = [];
 var pieces = [];
@@ -94,26 +96,41 @@ function add_piece(x, y, race) {
 
 function populate_pieces(board) {
     for (var square_index = 1; square_index < 166; square_index++){
-        console.log('two_' + square_index);
+
         var last_square = board.children['two_' + (square_index - 1)];
         var square = board.children['two_' + square_index];
         var next_square = board.children['two_' + (square_index + 1)];
-
-        // ToDo: This should probably be a try, where failure logs the current square for debugging
-        if (square_index > 1) {
-            var last_row = last_square.translation['x'] / SIDE_LENGTH;
-            var last_column = last_square.translation['y'] / SIDE_LENGTH;
-        }
 
         var row = square.translation['x'] / SIDE_LENGTH;
         var column = square.translation['y'] / SIDE_LENGTH;
 
         // ToDo: This should probably be a try, where failure logs the current square for debugging
-        var next_row = next_square.translation['x'] / SIDE_LENGTH;
-        var next_column = next_square.translation['y'] / SIDE_LENGTH;
+        try {
+            var last_row = last_square.translation['x'] / SIDE_LENGTH;
+            var last_column = last_square.translation['y'] / SIDE_LENGTH;
+        }
+        catch(error) {
+            if (error instanceof TypeError)
+                console.log("Failed to find previous square from ", row, column);
+            else
+                throw error;
+        }
 
-        // ToDo: figure out how to search a range
-        if (row == 7 && column in (0, 14) || column == 7 && row in (0, 14)){
+
+        try{
+            var next_row = next_square.translation['x'] / SIDE_LENGTH;
+            var next_column = next_square.translation['y'] / SIDE_LENGTH;
+        }
+        catch(error) {
+            if (error instanceof TypeError){
+                console.log("Failed to find next square from ", row, column, ", adding last dwarf.");
+                add_piece(column, row, "dwarf");
+            }
+            else
+                throw error;
+        }
+
+        if ((row == 7 && (column == 0 || column == 14)) || (column == 7 && (row == 0 || row == 14))){
             //do nothing - center of each side is empty, and direct center is empty
             var nothing = undefined;
         }
@@ -121,12 +138,15 @@ function populate_pieces(board) {
             // create a dwarf
             add_piece(column, row, "dwarf");
         }
-        else if (row in (6, 8) && column in (6, 8)) {
+        else if ((row == 6 || row == 7 || row == 8) && (column == 6 || column == 7 || column == 8) && !(row == 7 && column == 7)) {
             // create a troll
             add_piece(column, row, "troll");
         }
-        console.log(column, row);
+        else if ((row == 0 || row == 14) && (column == 6 || column == 8)){
+            add_piece(column, row, "dwarf");
         }
+
+    }
 }
 
 function mouseClick(event){
@@ -137,7 +157,7 @@ function mouseClick(event){
 
 document.addEventListener('click', mouseClick, false);
 
-board = create_board();
+var board = create_board();
 populate_pieces(board);
 
 add_piece(6, 6, 'troll');

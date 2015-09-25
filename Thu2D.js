@@ -4,7 +4,10 @@
 
 var elem = document.getElementById('main');
 var squares = [];
+var pieces = [];
 var SIDE_LENGTH = 50;
+var BOARD_BUFFER_X = 25;
+var BOARD_BUFFER_Y = 25;
 
 var params = { width: 800, height: 800 };
 var two = new Two(params);
@@ -16,7 +19,7 @@ two.appendTo(elem);
 //    rect.opacity = .75;
 //    rect.noStroke()}
 
-function create_square(x, y, color){
+function create_board_square(x, y, color){
     var rect = two.makeRectangle(x * SIDE_LENGTH, y * SIDE_LENGTH, SIDE_LENGTH, SIDE_LENGTH);
     if (color == "white"){
         rect.fill = '#FFFFFF';
@@ -30,21 +33,21 @@ function create_square(x, y, color){
     squares.push(rect);
 }
 
-function add_to_board(x ,y){
+function add_square_to_board(x ,y){
     if (x % 2 == 0){
         if (y % 2 == 0){
-            create_square(x, y, "white");
+            create_board_square(x, y, "white");
         }
         else {
-            create_square(x, y, "black");
+            create_board_square(x, y, "black");
         }
     }
     else {
         if (y % 2 == 0){
-            create_square(x, y, "black");
+            create_board_square(x, y, "black");
         }
         else {
-            create_square(x, y, "white");
+            create_board_square(x, y, "white");
         }
     }
 }
@@ -53,28 +56,91 @@ function create_board(){
     for (var x = 0; x < 15; x++) {
         if (x < 5){
             for (var y = 5 - x; y < 10 + x; y++){
-                add_to_board(x, y);
+                add_square_to_board(x, y);
             }
         }
         else if (x < 10) {
             for (var y = 0; y < 15; y ++){
-                add_to_board(x, y);
+                add_square_to_board(x, y);
             }
         }
         else if (x < 15) {
             for (var y = x - 9; y < (24 - x); y++){
-                add_to_board(x, y);
+                add_square_to_board(x, y);
             }
         }
     }
 
-    return two.makeGroup(squares);
-
-
+    board = two.makeGroup(squares);
+    board.translation.x = BOARD_BUFFER_X;
+    board.translation.y = BOARD_BUFFER_Y;
+    return board;
 }
 
+function add_piece(x, y, race) {
+    var rect = two.makeRectangle(x * SIDE_LENGTH + BOARD_BUFFER_X, y * SIDE_LENGTH + BOARD_BUFFER_Y,
+        SIDE_LENGTH * 0.8, SIDE_LENGTH * 0.8);
+    if (race == 'dwarf') {
+        rect.fill = 'red';
+    }
+    else if (race == 'troll') {
+        rect.fill = 'green';
+    }
+    rect.opacity = 1.0;
+    rect.noStroke();
+    two.update();
+    pieces.push(rect);
+}
+
+function populate_pieces(board) {
+    for (var square_index = 1; square_index < 166; square_index++){
+        console.log('two_' + square_index);
+        var last_square = board.children['two_' + (square_index - 1)];
+        var square = board.children['two_' + square_index];
+        var next_square = board.children['two_' + (square_index + 1)];
+
+        // ToDo: This should probably be a try, where failure logs the current square for debugging
+        if (square_index > 1) {
+            var last_row = last_square.translation['x'] / SIDE_LENGTH;
+            var last_column = last_square.translation['y'] / SIDE_LENGTH;
+        }
+
+        var row = square.translation['x'] / SIDE_LENGTH;
+        var column = square.translation['y'] / SIDE_LENGTH;
+
+        // ToDo: This should probably be a try, where failure logs the current square for debugging
+        var next_row = next_square.translation['x'] / SIDE_LENGTH;
+        var next_column = next_square.translation['y'] / SIDE_LENGTH;
+
+        // ToDo: figure out how to search a range
+        if (row == 7 && column in (0, 14) || column == 7 && row in (0, 14)){
+            //do nothing - center of each side is empty, and direct center is empty
+            var nothing = undefined;
+        }
+        else if (row != last_row || row != next_row){
+            // create a dwarf
+            add_piece(column, row, "dwarf");
+        }
+        else if (row in (6, 8) && column in (6, 8)) {
+            // create a troll
+            add_piece(column, row, "troll");
+        }
+        console.log(column, row);
+        }
+}
+
+function mouseClick(event){
+    // ToDo: what does this do?
+    event.preventDefault();
+    // need to pull in some sort of handler from two.js and deal with it appropriately
+}
+
+document.addEventListener('click', mouseClick, false);
+
 board = create_board();
-board.translation.x = 50;
-board.translation.y = 50;
+populate_pieces(board);
+
+add_piece(6, 6, 'troll');
+add_piece(0, 6, 'dwarf');
 
 two.update();

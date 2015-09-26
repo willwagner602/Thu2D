@@ -6,7 +6,7 @@
 
 var elem = document.getElementById('main');
 var squares = [];
-var pieces = [];
+var pieces = {};
 var SIDE_LENGTH = 50;
 var BOARD_BUFFER_X = 25;
 var BOARD_BUFFER_Y = 25;
@@ -79,6 +79,13 @@ function create_board(){
     return board;
 }
 
+function get_mouse_coords(event){
+    // get item id
+    // get item from dict of pieces by id - requires refactoring piece creation
+    var square = pieces[event.srcElement.id];
+    console.log(square.x, square.y);
+}
+
 function add_piece(x, y, race) {
     var rect = two.makeRectangle(x * SIDE_LENGTH + BOARD_BUFFER_X, y * SIDE_LENGTH + BOARD_BUFFER_Y,
         SIDE_LENGTH * 0.8, SIDE_LENGTH * 0.8);
@@ -91,7 +98,11 @@ function add_piece(x, y, race) {
     rect.opacity = 1.0;
     rect.noStroke();
     two.update();
-    pieces.push(rect);
+    rect.x = x;
+    rect.y = y;
+    rect.domElement = document.getElementById(rect.id);
+    rect.domElement.addEventListener('click', get_mouse_coords);
+    pieces[rect.id] = rect;
 }
 
 function populate_pieces(board) {
@@ -149,13 +160,6 @@ function populate_pieces(board) {
     }
 }
 
-function mouseClick(event){
-    // ToDo: what does this do?
-    event.preventDefault();
-    // need to pull in some sort of handler from two.js and deal with it appropriately
-}
-
-document.addEventListener('click', mouseClick, false);
 
 var board = create_board();
 populate_pieces(board);
@@ -164,3 +168,5 @@ add_piece(6, 6, 'troll');
 add_piece(0, 6, 'dwarf');
 
 two.update();
+
+var doc = document;

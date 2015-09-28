@@ -7,11 +7,10 @@
 function game() {
 
     var thud = this;
-
-    console.log(thud);
+    var debug_state = true;
 
     var elem = document.getElementById('main');
-    var squares = [];
+    var squares = {};
     var pieces = {};
     var SIDE_LENGTH = 50;
     var BOARD_BUFFER_X = 25;
@@ -25,7 +24,16 @@ function game() {
     // var api_url = "http://willwagner.me/"; // production
     var api_url = "http://127.0.0.1:12000/"; // local development
 
-    function create_board_square(x, y, color) {
+    function debug(message) {
+        if (debug_state == true) {
+            console.log(message);
+        }
+        else {
+            return false;
+        }
+    }
+
+    function create_square(x, y, color) {
         var rect = two.makeRectangle(x * SIDE_LENGTH, y * SIDE_LENGTH, SIDE_LENGTH, SIDE_LENGTH);
         if (color == "white") {
             rect.fill = '#FFFFFF';
@@ -37,24 +45,27 @@ function game() {
         rect.noStroke();
         rect.type = 'square';
         two.update();
-        squares.push(rect);
+        rect.domElement = document.getElementById(rect.id);
+        rect.domElement.addEventListener('click', select_square);
+        squares[rect.id] = rect;
+        //squares.push(rect);
     }
 
     function add_square_to_board(x, y) {
         if (x % 2 == 0) {
             if (y % 2 == 0) {
-                create_board_square(x, y, "white");
+                create_square(x, y, "white");
             }
             else {
-                create_board_square(x, y, "black");
+                create_square(x, y, "black");
             }
         }
         else {
             if (y % 2 == 0) {
-                create_board_square(x, y, "black");
+                create_square(x, y, "black");
             }
             else {
-                create_board_square(x, y, "white");
+                create_square(x, y, "white");
             }
         }
     }
@@ -77,8 +88,11 @@ function game() {
                 }
             }
         }
-
-        board = two.makeGroup(squares);
+        var list_of_squares = [];
+        for (i = 1; i < 166; i++) {
+            list_of_squares.push(squares['two_' + i]);
+        }
+        board = two.makeGroup(list_of_squares);
         board.translation.x = BOARD_BUFFER_X;
         board.translation.y = BOARD_BUFFER_Y;
         return board;
@@ -104,23 +118,19 @@ function game() {
         var piece = selected_piece;
         var start_x = piece.x;
         var start_y = piece.y;
+        debug(destination);
         var destination_x = destination.x;
         var destination_y = destination.y;
 
-        console.log(thud.player_one, thud.player_two, thud.game_id);
+        move_message = {
+            "game": thud.game_id,
+            "player": thud.player_one,
+            "start": [start_x, start_y],
+            "destination": [destination_x, destination_y]
+        }
+
         // ToDo: send formed message here, and pass to a resolve move function if true
-
-    }
-
-    function validate_attack(target) {
-        var start_x = selected_piece.x;
-        var start_y = selected_piece.y;
-        var destination_x = target.x;
-        var destination_y = target.y;
-
-        console.log('validate attack');
         deselect_piece();
-        // ToDo: send formed message here, and pass to a resolve attack function if true
     }
 
     function deselect_piece() {
@@ -132,15 +142,20 @@ function game() {
             selected_piece.fill = 'green';
             two.update();
         }
-        selected_piece = undefined;
+        else {
+            debug('something went wrong deselecting piece with race ' + selected_piece.race);
+        }
+        selected_piece = {};
     }
 
     function select_piece(event) {
         var square = pieces[event.srcElement.id];
 
+        debug('selected piece ' + square.id);
+
         if (selected_piece.type == 'piece') {
             // if a piece is already selected, attempt an attack (because this is a piece)
-            validate_attack(square)
+            validate_move(square);
         }
         else {
             square.fill = 'yellow';
@@ -152,7 +167,7 @@ function game() {
     function select_square(event) {
         if (selected_piece.type == 'piece') {
             // if a piece is already selected, attempt a move
-            var square = board[event.srcElement.id];
+            var square = squares[event.srcElement.id];
             validate_move(square);
         }
     }
@@ -161,9 +176,11 @@ function game() {
         var rect = two.makeRectangle(x * SIDE_LENGTH + BOARD_BUFFER_X, y * SIDE_LENGTH + BOARD_BUFFER_Y,
             SIDE_LENGTH * 0.8, SIDE_LENGTH * 0.8);
         if (race == 'dwarf') {
+            rect.race = 'dwarf';
             rect.fill = 'red';
         }
         else if (race == 'troll') {
+            rect.race = 'troll';
             rect.fill = 'green';
         }
         rect.opacity = 1.0;
@@ -180,9 +197,9 @@ function game() {
     function populate_pieces(board) {
         for (var square_index = 1; square_index < 166; square_index++) {
 
-            var last_square = board.children['two_' + (square_index - 1)];
-            var square = board.children['two_' + square_index];
-            var next_square = board.children['two_' + (square_index + 1)];
+            var last_square = squares['two_' + (square_index - 1)];
+            var square = squares['two_' + square_index];
+            var next_square = squares['two_' + (square_index + 1)];
 
             var row = square.translation['x'] / SIDE_LENGTH;
             var column = square.translation['y'] / SIDE_LENGTH;
@@ -194,7 +211,7 @@ function game() {
             }
             catch (error) {
                 if (error instanceof TypeError)
-                    console.log("Failed to find previous square from ", row, column);
+                    debug("Failed to find previous square from ", row, column);
                 else
                     throw error;
             }
@@ -206,7 +223,7 @@ function game() {
             }
             catch (error) {
                 if (error instanceof TypeError) {
-                    console.log("Failed to find next square from ", row, column, ", adding last dwarf.");
+                    debug("Failed to find next square from ", row, column, ", adding last dwarf.");
                     add_piece(column, row, "dwarf");
                 }
                 else

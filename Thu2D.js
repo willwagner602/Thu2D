@@ -2,9 +2,13 @@
  * Created by wwagner on 9/14/2015.
  */
 
-"use strict"
+//"use strict";
 
 function game() {
+
+    var thud = this;
+
+    console.log(thud);
 
     var elem = document.getElementById('main');
     var squares = [];
@@ -12,7 +16,7 @@ function game() {
     var SIDE_LENGTH = 50;
     var BOARD_BUFFER_X = 25;
     var BOARD_BUFFER_Y = 25;
-    var selected_piece = undefined;
+    var selected_piece = {};
 
     var params = {width: 800, height: 800};
     var two = new Two(params);
@@ -90,7 +94,10 @@ function game() {
 
     function start_game() {
         var message = {"game": "begin", "player_one": "Will", "player_two": "Tom"};
-        return post_message("start", message);
+        var response =  JSON.parse(post_message("start", message));
+        thud.game_id = response.game;
+        thud.player_one = response.player_one;
+        thud.player_two = response.player_two;
     }
 
     function validate_move(destination) {
@@ -100,7 +107,9 @@ function game() {
         var destination_x = destination.x;
         var destination_y = destination.y;
 
+        console.log(thud.player_one, thud.player_two, thud.game_id);
         // ToDo: send formed message here, and pass to a resolve move function if true
+
     }
 
     function validate_attack(target) {
@@ -109,15 +118,19 @@ function game() {
         var destination_x = target.x;
         var destination_y = target.y;
 
+        console.log('validate attack');
+        deselect_piece();
         // ToDo: send formed message here, and pass to a resolve attack function if true
     }
 
     function deselect_piece() {
         if (selected_piece.race == 'dwarf') {
             selected_piece.fill = 'red';
+            two.update();
         }
         else if (selected_piece.race == 'troll') {
-            selected_piece.fill = 'green'
+            selected_piece.fill = 'green';
+            two.update();
         }
         selected_piece = undefined;
     }
@@ -226,8 +239,8 @@ function game() {
     add_piece(0, 6, 'dwarf');
 
     two.update();
-    var game_info = start_game();
-    console.log(game_info);
+
+    start_game();
 }
 
 game();

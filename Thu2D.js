@@ -80,18 +80,12 @@ function game() {
         return board;
     }
 
-
     function post_message(event, message) {
+        // ToDo: return message sent as asynchronous request due to deprecation (even though this event is synchronous)
         var post = new XMLHttpRequest();
-        post.open('POST', api_url + event, true);
-        try {
-            post.send(JSON.stringify(message));
-            return post.responseText;
-        }
-        catch (e) {
-            console.log('Could not connect to server: ' + e);
-            return false;
-        }
+        post.open('POST', api_url + event, false);
+        post.send(JSON.stringify(message));
+        return post.responseText;
     }
 
     function start_game() {
@@ -225,7 +219,6 @@ function game() {
         }
     }
 
-
     var board = create_board();
     populate_pieces(board);
 
@@ -233,10 +226,8 @@ function game() {
     add_piece(0, 6, 'dwarf');
 
     two.update();
-
-    var doc = document;
-    var stuff = start_game();
-    console.log(stuff);
-    console.log(stuff.responseText);
+    var game_info = start_game();
+    console.log(game_info);
 }
+
 game();

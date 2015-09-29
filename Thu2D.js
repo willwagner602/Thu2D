@@ -15,7 +15,8 @@ function game() {
     var SIDE_LENGTH = 50;
     var BOARD_BUFFER_X = 25;
     var BOARD_BUFFER_Y = 25;
-    var selected_piece = {};
+    var current_piece = {};
+    var current_player = undefined;
 
     var params = {width: 800, height: 800};
     var two = new Two(params);
@@ -41,6 +42,8 @@ function game() {
         else if (color == "black") {
             rect.fill = '#000000';
         }
+        rect.x = x;
+        rect.y = y;
         rect.opacity = 1.0;
         rect.noStroke();
         rect.type = 'square';
@@ -103,49 +106,122 @@ function game() {
         var post = new XMLHttpRequest();
         post.open('POST', api_url + event, false);
         post.send(JSON.stringify(message));
-        return post.responseText;
+        return JSON.parse(post.responseText);
     }
 
     function start_game() {
         var message = {"game": "begin", "player_one": "Will", "player_two": "Tom"};
-        var response =  JSON.parse(post_message("start", message));
+        var response =  post_message("start", message);
         thud.game_id = response.game;
         thud.player_one = response.player_one;
         thud.player_two = response.player_two;
+        current_player = thud.player_one;
+    }
+
+    // ToDo: see how this compares to Math.abs, then delete
+    function abs(value) {
+        if (value < 0) {
+            return 0 - value;
+        }
+        else {
+            return value;
+        }
+    }
+
+    function switch_players(){
+        if (current_player = thud.player_one) {
+            current_player = thud.player_two;
+        }
+        else if (current_player = thud.player_two) {
+            current_player = thud.player_one;
+        }
+        else {
+            debug('invalid switch on current player ' + current_player);
+        }
+    }
+
+    function move_piece(dest_x, dest_y){
+        var start_x = current_piece.x;
+        var start_y = current_piece.y;
+
+        var delta_x = start_x - dest_x;
+        var delta_y = start_y - dest_y;
+        var counter = 0;
+
+        // ToDo: make this animate the piece moving across
+        while (Math.abs(delta_x) != 0 && Math.abs(delta_y != 0) && counter < 10){
+            for (var i = 0; i < 4; i++){
+                current_piece.translation.set(two._x = (start_x + (SIDE_LENGTH/4)) + BOARD_BUFFER_X,
+                    two._y = (start_y + (SIDE_LENGTH/4)) + BOARD_BUFFER_Y);
+            }
+            if (delta_x > 0) {
+                delta_x - SIDE_LENGTH;
+                start_x + SIDE_LENGTH;
+            }
+            else {
+                delta_x + SIDE_LENGTH;
+                start_x - SIDE_LENGTH;
+            }
+            if (delta_y > 0) {
+                delta_y - SIDE_LENGTH;
+                start_y + SIDE_LENGTH;
+            }
+            else {
+                delta_y + SIDE_LENGTH;
+                start_y - SIDE_LENGTH;
+            }
+            console.log(delta_x, delta_y);
+            counter += 1;
+        }
+
+        deselect_piece();
+    }
+
+    function process_move(return_message, dest_x, dest_y){
+        if (return_message == true) {
+            // move the piece to the destination
+            move_piece(dest_x, dest_y);
+            switch_players();
+        }
+        else if (return_message) {
+            debug("not true" + return_message);
+        }
+        else {
+            deselect_piece()
+            return false;
+        }
     }
 
     function validate_move(destination) {
-        var piece = selected_piece;
+        var piece = current_piece;
         var start_x = piece.x;
         var start_y = piece.y;
-        debug(destination);
         var destination_x = destination.x;
         var destination_y = destination.y;
 
-        move_message = {
+        var move_message = {
             "game": thud.game_id,
             "player": thud.player_one,
             "start": [start_x, start_y],
             "destination": [destination_x, destination_y]
-        }
-
-        // ToDo: send formed message here, and pass to a resolve move function if true
-        deselect_piece();
+        };
+        var response = post_message("move", move_message);
+        process_move(response, destination_x, destination_y);
     }
 
     function deselect_piece() {
-        if (selected_piece.race == 'dwarf') {
-            selected_piece.fill = 'red';
+        if (current_piece.race == 'dwarf') {
+            current_piece.fill = 'red';
             two.update();
         }
-        else if (selected_piece.race == 'troll') {
-            selected_piece.fill = 'green';
+        else if (current_piece.race == 'troll') {
+            current_piece.fill = 'green';
             two.update();
         }
         else {
-            debug('something went wrong deselecting piece with race ' + selected_piece.race);
+            debug('something went wrong deselecting piece with race ' + current_piece.race);
         }
-        selected_piece = {};
+        current_piece = {};
     }
 
     function select_piece(event) {
@@ -153,19 +229,19 @@ function game() {
 
         debug('selected piece ' + square.id);
 
-        if (selected_piece.type == 'piece') {
+        if (current_piece.type == 'piece') {
             // if a piece is already selected, attempt an attack (because this is a piece)
             validate_move(square);
         }
         else {
             square.fill = 'yellow';
             two.update();
-            selected_piece = square;
+            current_piece = square;
         }
     }
 
     function select_square(event) {
-        if (selected_piece.type == 'piece') {
+        if (current_piece.type == 'piece') {
             // if a piece is already selected, attempt a move
             var square = squares[event.srcElement.id];
             validate_move(square);

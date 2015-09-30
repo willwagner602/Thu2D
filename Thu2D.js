@@ -182,12 +182,16 @@ function game(){
         current_piece.x = (destination_x - BOARD_BUFFER_X) / SIDE_LENGTH;
         current_piece.y = (destination_y - BOARD_BUFFER_X) / SIDE_LENGTH;
 
+        debug(current_piece.x + ', ' + current_piece.y);
+
         deselect_piece();
     }
 
     function get_piece(destination_x, destination_y){
-        for (var i = 0; i < pieces.length; i++) {
-            var check_piece = pieces[i];
+        debug("getting piece at " + destination_x + ', ' + destination_y);
+        for (var i = 167; i < 209; i++) {
+            var check_piece = pieces["two_" + i];
+            debug(check_piece);
             if (check_piece.x == destination_x && check_piece.y == destination_y){
                 return check_piece;
             }
@@ -200,8 +204,16 @@ function game(){
         }
         for (var i = 0; i < message.length; i++){
             var target = message[i];
-            var target_piece = get_piece(destination_x, destination_y);
-            target_piece.remove();
+            var target_x = target[0];
+            var target_y = target[1];
+            var target_piece = get_piece(target_x, target_y);
+            debug(target_piece);
+            if (target_piece != undefined){
+                target_piece.remove();
+            }
+            else {
+                debug('error: target piece not found ' + target);
+            }
             two.update();
         }
         if (current_piece.race == 'dwarf'){

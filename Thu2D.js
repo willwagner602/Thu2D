@@ -4,7 +4,7 @@
 
 //"use strict";
 
-function game() {
+function game(){
 
     var thud = this;
     var debug_state = true;
@@ -51,7 +51,6 @@ function game() {
         rect.domElement = document.getElementById(rect.id);
         rect.domElement.addEventListener('click', select_square);
         squares[rect.id] = rect;
-        //squares.push(rect);
     }
 
     function add_square_to_board(x, y) {
@@ -103,6 +102,7 @@ function game() {
 
     function post_message(event, message) {
         // ToDo: return message sent as asynchronous request due to deprecation (even though this event is synchronous)
+        debug(message);
         var post = new XMLHttpRequest();
         post.open('POST', api_url + event, false);
         post.send(JSON.stringify(message));
@@ -118,79 +118,112 @@ function game() {
         current_player = thud.player_one;
     }
 
-    // ToDo: see how this compares to Math.abs, then delete
-    function abs(value) {
-        if (value < 0) {
-            return 0 - value;
-        }
-        else {
-            return value;
-        }
-    }
-
     function switch_players(){
-        if (current_player = thud.player_one) {
+        if (current_player == thud.player_one) {
             current_player = thud.player_two;
         }
-        else if (current_player = thud.player_two) {
+        else if (current_player == thud.player_two) {
             current_player = thud.player_one;
-        }
-        else {
-            debug('invalid switch on current player ' + current_player);
         }
     }
 
-    function move_piece(dest_x, dest_y){
-        var start_x = current_piece.x;
-        var start_y = current_piece.y;
-
-        var delta_x = start_x - dest_x;
-        var delta_y = start_y - dest_y;
-        var counter = 0;
-
-        // ToDo: make this animate the piece moving across
-        while (Math.abs(delta_x) != 0 && Math.abs(delta_y != 0) && counter < 10){
-            for (var i = 0; i < 4; i++){
-                current_piece.translation.set(two._x = (start_x + (SIDE_LENGTH/4)) + BOARD_BUFFER_X,
-                    two._y = (start_y + (SIDE_LENGTH/4)) + BOARD_BUFFER_Y);
+    function sleep(milliseconds) {
+        var start = new Date().getTime();
+        for (var i = 0; i < 1e7; i++) {
+            if ((new Date().getTime() - start) > milliseconds){
+                break;
             }
-            if (delta_x > 0) {
-                delta_x - SIDE_LENGTH;
-                start_x + SIDE_LENGTH;
+        }
+    }
+
+    function move_piece(destination){
+        // pass a square, assumed to be using selected piece
+        var start_x = current_piece.x * SIDE_LENGTH + BOARD_BUFFER_X;
+        var start_y = current_piece.y * SIDE_LENGTH + BOARD_BUFFER_Y;
+
+        var destination_x = destination[0] * SIDE_LENGTH + BOARD_BUFFER_X;
+        var destination_y = destination[1] * SIDE_LENGTH + BOARD_BUFFER_Y;
+
+        // ToDo: This probably isn't the right way to animate, maybe should be frames per second/square moved?
+        var seconds = 10;  // number of seconds to animate the moving piece across
+        var animation_wait = 10000/seconds; // number of milliseconds to wait to achieve desired frame translation rate
+
+        // 8,8 to 9,9  = 450,450 to 500,500 = -50,-50
+        // 8,8 to 7,9 = 450,450 to 400,500 = 50,-50
+        // 8,8 to 9,7 = 450,450 to 500,400 = -50,50
+        // 6,6 to 5,5 = 350,350 to 300,300 = 50,50
+        var delta_x = start_x - destination_x;
+        var delta_y = start_y - destination_y;
+
+        var move_x = start_x;
+        var move_y = start_y;
+
+        while (Math.abs(delta_x) > 0 || Math.abs(delta_y) > 0){
+            while (current_piece.translation._x != destination_x && current_piece.translation._y != destination_y) {
+                move_x -= SIDE_LENGTH/seconds * Math.sign(delta_x);
+                move_y -= SIDE_LENGTH/seconds * Math.sign(delta_y);
+                current_piece.translation.set(move_x, move_y);
             }
-            else {
-                delta_x + SIDE_LENGTH;
-                start_x - SIDE_LENGTH;
+            if (delta_x > 0){
+                delta_x -= SIDE_LENGTH;
+            }
+            else if (delta_x < 0) {
+                delta_x += SIDE_LENGTH;
             }
             if (delta_y > 0) {
-                delta_y - SIDE_LENGTH;
-                start_y + SIDE_LENGTH;
+                delta_y -= SIDE_LENGTH;
             }
-            else {
-                delta_y + SIDE_LENGTH;
-                start_y - SIDE_LENGTH;
+            else if (delta_y < 0) {
+                delta_y += SIDE_LENGTH;
             }
-            console.log(delta_x, delta_y);
-            counter += 1;
+            console.log("Delta = ", delta_x, delta_y);
         }
+
+        current_piece.x = (destination_x - BOARD_BUFFER_X) / SIDE_LENGTH;
+        current_piece.y = (destination_y - BOARD_BUFFER_X) / SIDE_LENGTH;
 
         deselect_piece();
     }
 
-    function process_move(return_message, dest_x, dest_y){
-        if (return_message == true) {
-            // move the piece to the destination
-            move_piece(dest_x, dest_y);
-            switch_players();
-        }
-        else if (return_message) {
-            debug("not true" + return_message);
-        }
-        else {
-            deselect_piece()
-            return false;
+    function get_piece(destination_x, destination_y){
+        for (var i = 0; i < pieces.length; i++) {
+            var check_piece = pieces[i];
+            if (check_piece.x == destination_x && check_piece.y == destination_y){
+                return check_piece;
+            }
         }
     }
+
+    function process_attack(message, destination_x, destination_y){
+        if (current_piece.race == 'troll'){
+            move_piece(destination_x, destination_y);
+        }
+        for (var i = 0; i < message.length; i++){
+            var target = message[i];
+            var target_piece = get_piece(destination_x, destination_y);
+            target_piece.remove();
+            two.update();
+        }
+        if (current_piece.race == 'dwarf'){
+            move_piece(destination_x, destination_y);
+        }
+    }
+
+    function process_move(return_message, destination_x, destination_y){
+        if (return_message == true) {
+            // move the piece to the destination
+            move_piece([destination_x, destination_y]);
+            switch_players();
+        }
+        else if (typeof (return_message) == "object") {
+            process_attack(return_message, destination_x, destination_y);
+            switch_players();
+        }
+        else {
+            deselect_piece();
+            return false;
+            }
+        }
 
     function validate_move(destination) {
         var piece = current_piece;
@@ -201,7 +234,7 @@ function game() {
 
         var move_message = {
             "game": thud.game_id,
-            "player": thud.player_one,
+            "player": current_player,
             "start": [start_x, start_y],
             "destination": [destination_x, destination_y]
         };

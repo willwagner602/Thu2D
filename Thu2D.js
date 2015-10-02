@@ -102,7 +102,6 @@ function game(){
 
     function post_message(event, message) {
         // ToDo: return message sent as asynchronous request due to deprecation (even though this event is synchronous)
-        debug(message);
         var post = new XMLHttpRequest();
         post.open('POST', api_url + event, false);
         post.send(JSON.stringify(message));
@@ -137,6 +136,8 @@ function game(){
     }
 
     function move_piece(destination){
+        debug("Moving piece from " + current_piece.x + ', ' + current_piece.y + ' to ' +
+            destination[0] + ', ' + destination[1]);
         // pass a square, assumed to be using selected piece
         var start_x = current_piece.x * SIDE_LENGTH + BOARD_BUFFER_X;
         var start_y = current_piece.y * SIDE_LENGTH + BOARD_BUFFER_Y;
@@ -144,54 +145,51 @@ function game(){
         var destination_x = destination[0] * SIDE_LENGTH + BOARD_BUFFER_X;
         var destination_y = destination[1] * SIDE_LENGTH + BOARD_BUFFER_Y;
 
+        current_piece.translation.set(destination_x, destination_y);
+
         // ToDo: This probably isn't the right way to animate, maybe should be frames per second/square moved?
-        var seconds = 10;  // number of seconds to animate the moving piece across
-        var animation_wait = 10000/seconds; // number of milliseconds to wait to achieve desired frame translation rate
+        //var seconds = 10;  // number of seconds to animate the moving piece across
+        //var animation_wait = 10000/seconds; // number of milliseconds to wait to achieve desired frame translation rate
 
         // 8,8 to 9,9  = 450,450 to 500,500 = -50,-50
         // 8,8 to 7,9 = 450,450 to 400,500 = 50,-50
         // 8,8 to 9,7 = 450,450 to 500,400 = -50,50
         // 6,6 to 5,5 = 350,350 to 300,300 = 50,50
-        var delta_x = start_x - destination_x;
-        var delta_y = start_y - destination_y;
-
-        var move_x = start_x;
-        var move_y = start_y;
-
-        while (Math.abs(delta_x) > 0 || Math.abs(delta_y) > 0){
-            while (current_piece.translation._x != destination_x && current_piece.translation._y != destination_y) {
-                move_x -= SIDE_LENGTH/seconds * Math.sign(delta_x);
-                move_y -= SIDE_LENGTH/seconds * Math.sign(delta_y);
-                current_piece.translation.set(move_x, move_y);
-            }
-            if (delta_x > 0){
-                delta_x -= SIDE_LENGTH;
-            }
-            else if (delta_x < 0) {
-                delta_x += SIDE_LENGTH;
-            }
-            if (delta_y > 0) {
-                delta_y -= SIDE_LENGTH;
-            }
-            else if (delta_y < 0) {
-                delta_y += SIDE_LENGTH;
-            }
-            console.log("Delta = ", delta_x, delta_y);
-        }
+        //var delta_x = start_x - destination_x;
+        //var delta_y = start_y - destination_y;
+        //
+        //var move_x = start_x;
+        //var move_y = start_y;
+        //
+        //while (Math.abs(delta_x) > 0 || Math.abs(delta_y) > 0){
+        //    while (current_piece.translation._x != destination_x && current_piece.translation._y != destination_y) {
+        //        move_x -= SIDE_LENGTH/seconds * Math.sign(delta_x);
+        //        move_y -= SIDE_LENGTH/seconds * Math.sign(delta_y);
+        //        current_piece.translation.set(move_x, move_y);
+        //    }
+        //    if (delta_x > 0){
+        //        delta_x -= SIDE_LENGTH;
+        //    }
+        //    else if (delta_x < 0) {
+        //        delta_x += SIDE_LENGTH;
+        //    }
+        //    if (delta_y > 0) {
+        //        delta_y -= SIDE_LENGTH;
+        //    }
+        //    else if (delta_y < 0) {
+        //        delta_y += SIDE_LENGTH;
+        //    }
+        //}
 
         current_piece.x = (destination_x - BOARD_BUFFER_X) / SIDE_LENGTH;
         current_piece.y = (destination_y - BOARD_BUFFER_X) / SIDE_LENGTH;
-
-        debug(current_piece.x + ', ' + current_piece.y);
 
         deselect_piece();
     }
 
     function get_piece(destination_x, destination_y){
-        debug("getting piece at " + destination_x + ', ' + destination_y);
         for (var i = 167; i < 209; i++) {
             var check_piece = pieces["two_" + i];
-            debug(check_piece);
             if (check_piece.x == destination_x && check_piece.y == destination_y){
                 return check_piece;
             }
@@ -200,14 +198,13 @@ function game(){
 
     function process_attack(message, destination_x, destination_y){
         if (current_piece.race == 'troll'){
-            move_piece(destination_x, destination_y);
+            move_piece([destination_x, destination_y]);
         }
         for (var i = 0; i < message.length; i++){
             var target = message[i];
             var target_x = target[0];
             var target_y = target[1];
             var target_piece = get_piece(target_x, target_y);
-            debug(target_piece);
             if (target_piece != undefined){
                 target_piece.remove();
             }
@@ -217,7 +214,7 @@ function game(){
             two.update();
         }
         if (current_piece.race == 'dwarf'){
-            move_piece(destination_x, destination_y);
+            move_piece([destination_x, destination_y]);
         }
     }
 
@@ -271,8 +268,6 @@ function game(){
 
     function select_piece(event) {
         var square = pieces[event.srcElement.id];
-
-        debug('selected piece ' + square.id);
 
         if (current_piece.type == 'piece') {
             // if a piece is already selected, attempt an attack (because this is a piece)
@@ -331,8 +326,9 @@ function game(){
                 var last_column = last_square.translation['y'] / SIDE_LENGTH;
             }
             catch (error) {
-                if (error instanceof TypeError)
-                    debug("Failed to find previous square from ", row, column);
+                if (error instanceof TypeError){
+                    // this is the first piece for the board
+                }
                 else
                     throw error;
             }
@@ -344,7 +340,6 @@ function game(){
             }
             catch (error) {
                 if (error instanceof TypeError) {
-                    debug("Failed to find next square from ", row, column, ", adding last dwarf.");
                     add_piece(column, row, "dwarf");
                 }
                 else
@@ -366,9 +361,10 @@ function game(){
             else if ((row == 0 || row == 14) && (column == 6 || column == 8)) {
                 add_piece(column, row, "dwarf");
             }
-
         }
     }
+
+    start_game();
 
     var board = create_board();
     populate_pieces(board);
@@ -377,8 +373,6 @@ function game(){
     add_piece(0, 6, 'dwarf');
 
     two.update();
-
-    start_game();
 }
 
 game();

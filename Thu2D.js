@@ -91,7 +91,7 @@ function game(){
             }
         }
         var list_of_squares = [];
-        for (i = 1; i < 166; i++) {
+        for (var i = 1; i < 166; i++) {
             list_of_squares.push(squares['two_' + i]);
         }
         board = two.makeGroup(list_of_squares);
@@ -126,21 +126,9 @@ function game(){
         }
     }
 
-    function sleep(milliseconds) {
-        var start = new Date().getTime();
-        for (var i = 0; i < 1e7; i++) {
-            if ((new Date().getTime() - start) > milliseconds){
-                break;
-            }
-        }
-    }
-
     function move_piece(destination){
         debug("Moving piece from " + current_piece.x + ', ' + current_piece.y + ' to ' +
             destination[0] + ', ' + destination[1]);
-        // pass a square, assumed to be using selected piece
-        var start_x = current_piece.x * SIDE_LENGTH + BOARD_BUFFER_X;
-        var start_y = current_piece.y * SIDE_LENGTH + BOARD_BUFFER_Y;
 
         var destination_x = destination[0] * SIDE_LENGTH + BOARD_BUFFER_X;
         var destination_y = destination[1] * SIDE_LENGTH + BOARD_BUFFER_Y;
@@ -319,13 +307,13 @@ function game(){
         pieces[piece.id] = piece;
     }
 
-    function add_thudstone(board, x, y){
+    function add_thudstone(x, y){
         var thudstone = two.makeCircle(x * SIDE_LENGTH + BOARD_BUFFER_X, y * SIDE_LENGTH + BOARD_BUFFER_Y,
             SIDE_LENGTH * 0.4);
         thudstone.fill = 'black';
     }
 
-    function populate_pieces(board) {
+    function populate_pieces() {
         for (var square_index = 1; square_index < 166; square_index++) {
 
             var last_square = squares['two_' + (square_index - 1)];
@@ -335,10 +323,8 @@ function game(){
             var row = square.translation['x'] / SIDE_LENGTH;
             var column = square.translation['y'] / SIDE_LENGTH;
 
-            // ToDo: This should probably be a try, where failure logs the current square for debugging
             try {
                 var last_row = last_square.translation['x'] / SIDE_LENGTH;
-                var last_column = last_square.translation['y'] / SIDE_LENGTH;
             }
             catch (error) {
                 if (error instanceof TypeError){
@@ -351,7 +337,6 @@ function game(){
 
             try {
                 var next_row = next_square.translation['x'] / SIDE_LENGTH;
-                var next_column = next_square.translation['y'] / SIDE_LENGTH;
             }
             catch (error) {
                 if (error instanceof TypeError) {
@@ -362,8 +347,6 @@ function game(){
             }
 
             if ((row == 7 && (column == 0 || column == 14)) || (column == 7 && (row == 0 || row == 14))) {
-                //do nothing - center of each side is empty, and direct center is empty
-                var nothing = undefined;
             }
             else if (row != last_row || row != next_row) {
                 // create a dwarf
@@ -378,13 +361,13 @@ function game(){
             }
         }
 
-        add_thudstone(board, 7, 7);
+        add_thudstone(7, 7);
     }
 
     start_game();
 
     var board = create_board();
-    populate_pieces(board);
+    populate_pieces();
 
     add_piece(6, 6, 'troll');
     add_piece(0, 6, 'dwarf');

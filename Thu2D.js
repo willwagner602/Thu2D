@@ -266,17 +266,24 @@ function game(){
         current_piece = {};
     }
 
+    function highlight_piece(piece) {
+        piece.fill = 'yellow';
+        two.update();
+        current_piece = piece;
+    }
+
     function select_piece(event) {
-        var square = pieces[event.srcElement.id];
+        var selected_piece = pieces[event.srcElement.id];
 
         if (current_piece.type == 'piece') {
             // if a piece is already selected, attempt an attack (because this is a piece)
-            validate_move(square);
+            validate_move(selected_piece);
         }
-        else {
-            square.fill = 'yellow';
-            two.update();
-            current_piece = square;
+        else if (selected_piece.race == 'dwarf' && current_player == thud.player_one){
+            highlight_piece(selected_piece);
+        }
+        else if (selected_piece.race == 'troll' && current_player == thud.player_two){
+            highlight_piece(selected_piece);
         }
     }
 
@@ -289,25 +296,33 @@ function game(){
     }
 
     function add_piece(x, y, race) {
-        var rect = two.makeRectangle(x * SIDE_LENGTH + BOARD_BUFFER_X, y * SIDE_LENGTH + BOARD_BUFFER_Y,
-            SIDE_LENGTH * 0.8, SIDE_LENGTH * 0.8);
         if (race == 'dwarf') {
-            rect.race = 'dwarf';
-            rect.fill = 'red';
+            var piece = two.makeCircle(x * SIDE_LENGTH + BOARD_BUFFER_X, y * SIDE_LENGTH + BOARD_BUFFER_Y,
+                SIDE_LENGTH * 0.4);
+            piece.race = 'dwarf';
+            piece.fill = 'red';
         }
         else if (race == 'troll') {
-            rect.race = 'troll';
-            rect.fill = 'green';
+            var piece = two.makeRectangle(x * SIDE_LENGTH + BOARD_BUFFER_X, y * SIDE_LENGTH + BOARD_BUFFER_Y,
+                SIDE_LENGTH * 0.8, SIDE_LENGTH * 0.8);
+            piece.race = 'troll';
+            piece.fill = 'green';
         }
-        rect.opacity = 1.0;
-        rect.noStroke();
+        piece.opacity = 1.0;
+        piece.noStroke();
         two.update();
-        rect.x = x;
-        rect.y = y;
-        rect.type = 'piece';
-        rect.domElement = document.getElementById(rect.id);
-        rect.domElement.addEventListener('click', select_piece);
-        pieces[rect.id] = rect;
+        piece.x = x;
+        piece.y = y;
+        piece.type = 'piece';
+        piece.domElement = document.getElementById(piece.id);
+        piece.domElement.addEventListener('click', select_piece);
+        pieces[piece.id] = piece;
+    }
+
+    function add_thudstone(board, x, y){
+        var thudstone = two.makeCircle(x * SIDE_LENGTH + BOARD_BUFFER_X, y * SIDE_LENGTH + BOARD_BUFFER_Y,
+            SIDE_LENGTH * 0.4);
+        thudstone.fill = 'black';
     }
 
     function populate_pieces(board) {
@@ -362,6 +377,8 @@ function game(){
                 add_piece(column, row, "dwarf");
             }
         }
+
+        add_thudstone(board, 7, 7);
     }
 
     start_game();

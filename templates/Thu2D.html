@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 
+    {{ csrf_token }}
+
     <head>
         <meta charset="UTF-8">
         <title></title>
@@ -9,8 +11,9 @@
     <body>
         <div id="board"></div>
         <div id="main"></div>
-        <script src="static/Thu2d/two.min.js"></script>
-        <script src="static/Thu2d/Thu2D.js"></script>
+        {% load staticfiles %}
+        <script src="{% static "Thu2d/two.min.js" %}"></script>
+        <script src="{% static "Thu2d/Thu2D.js" %}"></script>
     </body>
 
 </html>

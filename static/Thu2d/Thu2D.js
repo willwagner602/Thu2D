@@ -23,7 +23,7 @@ function game(){
     two.appendTo(elem);
 
     // var api_url = "http://willwagner.me/"; // production
-    var api_url = "http://127.0.0.1:12000/"; // local development
+    var api_url = "http://127.0.0.1:8000/thud/"; // local development
 
     function debug(message) {
         if (debug_state == true) {

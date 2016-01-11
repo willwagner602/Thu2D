@@ -4,5 +4,5 @@ from django.conf.urls import url
 from django.views.generic import TemplateView
 
 urlpatterns = [
-        url(r"^$", TemplateView.as_view(template_name='Thu2D.html', )),
+        url(r"^$", TemplateView.as_view(template_name='Thu2d/Thu2D.html', )),
     ]

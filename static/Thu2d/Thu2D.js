@@ -22,7 +22,7 @@ function game(){
     var two = new Two(params);
     two.appendTo(elem);
 
-    // var api_url = "http://willwagner.me/"; // production
+    // var api_url = "http://willwagner.me/thud/"; // production
     var api_url = "http://127.0.0.1:8000/thud/"; // local development
 
     function debug(message) {
@@ -102,9 +102,16 @@ function game(){
 
     function post_message(event, message) {
         // ToDo: return message sent as asynchronous request due to deprecation (even though this event is synchronous)
+
+        cookie = document.cookie
+        var CSRF_TOKEN = cookie.substr(cookie.search('=') + 1);
         var post = new XMLHttpRequest();
+        console.log(api_url + event);
         post.open('POST', api_url + event, false);
+        post.withCredentials = 'true';
+        console.log(JSON.stringify(message));
         post.send(JSON.stringify(message));
+        console.log(post.responseText);
         return JSON.parse(post.responseText);
     }
 

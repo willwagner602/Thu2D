@@ -145,40 +145,6 @@ function game(){
 
         current_piece.translation.set(destination_x, destination_y);
 
-        // ToDo: This probably isn't the right way to animate, maybe should be frames per second/square moved?
-        //var seconds = 10;  // number of seconds to animate the moving piece across
-        //var animation_wait = 10000/seconds; // number of milliseconds to wait to achieve desired frame translation rate
-
-        // 8,8 to 9,9  = 450,450 to 500,500 = -50,-50
-        // 8,8 to 7,9 = 450,450 to 400,500 = 50,-50
-        // 8,8 to 9,7 = 450,450 to 500,400 = -50,50
-        // 6,6 to 5,5 = 350,350 to 300,300 = 50,50
-        //var delta_x = start_x - destination_x;
-        //var delta_y = start_y - destination_y;
-        //
-        //var move_x = start_x;
-        //var move_y = start_y;
-        //
-        //while (Math.abs(delta_x) > 0 || Math.abs(delta_y) > 0){
-        //    while (current_piece.translation._x != destination_x && current_piece.translation._y != destination_y) {
-        //        move_x -= SIDE_LENGTH/seconds * Math.sign(delta_x);
-        //        move_y -= SIDE_LENGTH/seconds * Math.sign(delta_y);
-        //        current_piece.translation.set(move_x, move_y);
-        //    }
-        //    if (delta_x > 0){
-        //        delta_x -= SIDE_LENGTH;
-        //    }
-        //    else if (delta_x < 0) {
-        //        delta_x += SIDE_LENGTH;
-        //    }
-        //    if (delta_y > 0) {
-        //        delta_y -= SIDE_LENGTH;
-        //    }
-        //    else if (delta_y < 0) {
-        //        delta_y += SIDE_LENGTH;
-        //    }
-        //}
-
         current_piece.x = (destination_x - BOARD_BUFFER_X) / SIDE_LENGTH;
         current_piece.y = (destination_y - BOARD_BUFFER_X) / SIDE_LENGTH;
 
@@ -357,6 +323,7 @@ function game(){
             }
 
             if ((row == 7 && (column == 0 || column == 14)) || (column == 7 && (row == 0 || row == 14))) {
+                // leave an open square
             }
             else if (row != last_row || row != next_row) {
                 // create a dwarf

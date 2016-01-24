@@ -22,8 +22,8 @@ function game(){
     var two = new Two(params);
     two.appendTo(elem);
 
-    // var api_url = "http://willwagner.me/thud/"; // production
-    var api_url = "http://10.46.211.114/thud/"; // local development
+    var api_url = "http://willwagner.me/thud/"; // production
+    //var api_url = "http://10.46.211.114/thud/"; // local development
 
     function debug(message) {
         if (debug_state == true) {

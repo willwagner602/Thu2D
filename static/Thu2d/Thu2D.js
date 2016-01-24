@@ -109,7 +109,8 @@ function game(){
         // Setup and send POST request
         var post = new XMLHttpRequest();
         post.open('POST', api_url + event, false);
-        post.setRequestHeader('csrftoken', CSRF_TOKEN);
+        post.setRequestHeader('X-CSRFToken', CSRF_TOKEN);
+        post.setRequestHeader('Content-Type', 'application/json');
         console.log(post);
         post.withCredentials = 'true';
         post.send(JSON.stringify(message));
